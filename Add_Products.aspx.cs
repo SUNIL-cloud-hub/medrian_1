@@ -1,0 +1,141 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+
+
+namespace medrian_1
+{
+    public partial class Add_Products : System.Web.UI.Page
+    {
+        SqlConnection con;
+        SqlCommand cmd;
+        SqlDataAdapter da;
+        DataSet ds;
+
+        string fnm;
+
+        string s = ConfigurationManager
+                    .ConnectionStrings["dbcon"]
+                    .ConnectionString;
+
+        void getCon()
+        {
+            con = new SqlConnection(s);
+            con.Open();
+        }
+
+        void clear()
+        {
+            txtmodel.Text = string.Empty;
+            txtdesc.Text = string.Empty;
+            txtweight.Text = string.Empty;
+            txtconfig.Text = string.Empty;
+            txtprice.Text = string.Empty;
+        }
+
+        void fileUpload()
+        {
+            fnm = "images/" + imgUpload.FileName;
+            imgUpload.SaveAs(Server.MapPath(fnm));
+        }
+
+        void fillCombo()
+        {
+            getCon();
+
+            da = new SqlDataAdapter(
+                "SELECT * FROM Add_Company_Tbl",
+                con
+            );
+
+            ds = new DataSet();
+
+            da.Fill(ds);
+
+            for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+            {
+                drpcompid.Items.Add(
+                    ds.Tables[0].Rows[i]["Comp_Name"].ToString()
+                );
+            }
+
+            con.Close();
+        }
+
+
+
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                fillCombo();
+
+                
+            }
+
+        }
+
+        protected void btnAdd_Click(object sender, EventArgs e)
+        {
+           
+        }
+
+        protected void LinkButton1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        protected void btnAdd_Click1(object sender, EventArgs e)
+        {
+            getCon();
+
+            fileUpload();
+
+            da = new SqlDataAdapter(
+                "SELECT * FROM Add_Company_Tbl WHERE Comp_Name='" +
+                drpcompid.SelectedItem.Text + "'",
+                con
+            );
+
+            ds = new DataSet();
+
+            da.Fill(ds);
+
+            int cid = Convert.ToInt32(
+                ds.Tables[0].Rows[0]["Comp_Id"]
+            );
+
+            cmd = new SqlCommand(
+                "INSERT INTO Add_Products_Tbl " +
+                "(Prod_Comp_Id, Prod_Name, Prod_Model, Prod_Desc, Prod_Weight, Prod_Config, Prod_Img, Prod_Price) " +
+                "VALUES (" +
+                "'" + cid + "'," +
+                "'" + drpcompid.SelectedItem.Text + "'," +
+                "'" + txtmodel.Text + "'," +
+                "'" + txtdesc.Text + "'," +
+                "'" + txtweight.Text + "'," +
+                "'" + txtconfig.Text + "'," +
+                "'" + fnm + "'," +
+                "'" + txtprice.Text + "'" +
+                ")",
+                con
+            );
+
+            cmd.ExecuteNonQuery();
+
+            Response.Write(
+                "<script>alert('Product Added Successfully')</script>"
+            );
+
+            clear();
+
+            con.Close();
+        }
+    }
+}
